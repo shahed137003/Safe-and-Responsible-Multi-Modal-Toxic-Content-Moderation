@@ -3,7 +3,8 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, Blip
 import torch
 import re
 from PIL import Image
-
+from transformers import AutoModelForCausalLM
+from huggingface_hub import login
 st.set_page_config(page_title="Toxic Content Moderation", layout="centered")
 
 # 🔴 Inject custom red-accented CSS
@@ -98,6 +99,8 @@ st.markdown("""
         background-color: #c62828 !important;
         color: white !important;
     }
+    
+    
     </style>
 """, unsafe_allow_html=True)
 
@@ -113,7 +116,47 @@ def dataCleaning(text):
     return text.lower()
 
 # 🔎 Prediction function
-def predict_moderation(input_text):
+def Hard_Filter(input_text):
+    login(token="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")
+    model_id = "meta-llama/Llama-Guard-3-8B"
+    device = "cuda"
+    dtype = torch.bfloat16
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype, device_map=device)
+    # Llama Guard system prompt format
+    system_prompt = (
+        "<|start_header_id|>system<|end_header_id|>\n"
+        "You are a content moderation assistant. Label the following content as either SAFE or UNSAFE.\n"
+        "<|eot_id|>"
+    )
+    user_prompt = f"<|start_header_id|>user<|end_header_id|>\n{input_text}\n<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>\n"
+
+    full_prompt = system_prompt + user_prompt
+
+    # Tokenize and generate
+    inputs = tokenizer(full_prompt, return_tensors="pt").to(model.device)
+    output = model.generate(
+        **inputs,
+        max_new_tokens=20,
+        do_sample=False,
+        pad_token_id=tokenizer.eos_token_id
+    )
+
+    decoded = tokenizer.decode(output[0], skip_special_tokens=True)
+
+    # Extract response (after 'assistant' header)
+    response = decoded.split("assistant")[-1].strip().upper()
+
+    # Determine if unsafe
+    if "UNSAFE" in response:
+        return "UNSAFE"
+    elif "SAFE" in response:
+        return "SAFE"
+    else:
+        return "UNKNOWN"
+
+    
+def Soft_Classifier(input_text):
     input_text = dataCleaning(input_text)
     class_labels = [
         "Safe", "Violent Crimes", "Elections", "Sex-Related Crimes", "Unsafe",
@@ -154,7 +197,7 @@ if "image" in choice:
             caption = processor.decode(output[0], skip_special_tokens=True)
 
         st.markdown(f"<div class='caption-box'>📝 <strong>Generated Caption:</strong> {caption}</div>", unsafe_allow_html=True)
-        prediction = predict_moderation(caption)
+        prediction = Soft_Classifier(caption)
         st.markdown(f"<div class='result-card'>🚨 <strong>Predicted Class:</strong> {prediction}</div>", unsafe_allow_html=True)
 
 # 💬 Query input
@@ -163,5 +206,5 @@ if "query" in choice:
     query = st.text_input("")
     if query:
         st.markdown(f"<div class='caption-box'>🔍 <strong>Your Input:</strong> {query}</div>", unsafe_allow_html=True)
-        prediction = predict_moderation(query)
+        prediction = Soft_Classifier(query)
         st.markdown(f"<div class='result-card'>🚨 <strong>Predicted Class:</strong> {prediction}</div>", unsafe_allow_html=True)
