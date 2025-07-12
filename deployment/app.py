@@ -178,7 +178,7 @@ def Soft_Classifier(input_text):
 # 🧠 BLIP captioning
 @st.cache_resource
 def load_blip():
-    login(token="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")
+    login(token="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")
     processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
     model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
     return processor, model
