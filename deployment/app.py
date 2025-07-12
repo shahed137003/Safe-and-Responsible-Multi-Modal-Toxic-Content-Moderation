@@ -115,46 +115,46 @@ def dataCleaning(text):
     text = re.sub(r"\s+", " ", text).strip()
     return text.lower()
 
-# 🔎 Prediction function
-def Hard_Filter(input_text):
-    login(token="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")
-    model_id = "meta-llama/Llama-Guard-3-8B"
-    device = "cuda"
-    dtype = torch.bfloat16
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype, device_map=device)
-    # Llama Guard system prompt format
-    system_prompt = (
-        "<|start_header_id|>system<|end_header_id|>\n"
-        "You are a content moderation assistant. Label the following content as either SAFE or UNSAFE.\n"
-        "<|eot_id|>"
-    )
-    user_prompt = f"<|start_header_id|>user<|end_header_id|>\n{input_text}\n<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>\n"
+# # 🔎 Prediction function
+# def Hard_Filter(input_text):
+#     login(token="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")
+#     model_id = "meta-llama/Llama-Guard-3-8B"
+#     device = "cuda"
+#     dtype = torch.bfloat16
+#     tokenizer = AutoTokenizer.from_pretrained(model_id)
+#     model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype, device_map=device)
+#     # Llama Guard system prompt format
+#     system_prompt = (
+#         "<|start_header_id|>system<|end_header_id|>\n"
+#         "You are a content moderation assistant. Label the following content as either SAFE or UNSAFE.\n"
+#         "<|eot_id|>"
+#     )
+#     user_prompt = f"<|start_header_id|>user<|end_header_id|>\n{input_text}\n<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>\n"
 
-    full_prompt = system_prompt + user_prompt
+#     full_prompt = system_prompt + user_prompt
 
-    # Tokenize and generate
-    inputs = tokenizer(full_prompt, return_tensors="pt").to(model.device)
-    output = model.generate(
-        **inputs,
-        max_new_tokens=20,
-        do_sample=False,
-        pad_token_id=tokenizer.eos_token_id
-    )
+#     # Tokenize and generate
+#     inputs = tokenizer(full_prompt, return_tensors="pt").to(model.device)
+#     output = model.generate(
+#         **inputs,
+#         max_new_tokens=20,
+#         do_sample=False,
+#         pad_token_id=tokenizer.eos_token_id
+#     )
 
-    decoded = tokenizer.decode(output[0], skip_special_tokens=True)
+#     decoded = tokenizer.decode(output[0], skip_special_tokens=True)
 
-    # Extract response (after 'assistant' header)
-    response = decoded.split("assistant")[-1].strip().upper()
+#     # Extract response (after 'assistant' header)
+#     response = decoded.split("assistant")[-1].strip().upper()
 
-    # Determine if unsafe
-    if "UNSAFE" in response:
-        return "UNSAFE"
-    elif "SAFE" in response:
-        return "SAFE"
+#     # Determine if unsafe
+#     if "UNSAFE" in response:
+#         return "UNSAFE"
+#     elif "SAFE" in response:
+#         return "SAFE"
     
-    else:
-        return "UNKNOWN"
+#     else:
+#         return "UNKNOWN"
 
     
 def Soft_Classifier(input_text):
