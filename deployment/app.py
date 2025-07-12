@@ -5,6 +5,7 @@ import re
 from PIL import Image
 from transformers import AutoModelForCausalLM
 from huggingface_hub import login
+from huggingface_hub import create_repo, upload_folder
 st.set_page_config(page_title="Toxic Content Moderation", layout="centered")
 
 # 🔴 Inject custom red-accented CSS
@@ -163,6 +164,8 @@ def Soft_Classifier(input_text):
         "Safe", "Violent Crimes", "Elections", "Sex-Related Crimes", "Unsafe",
         "Non-Violent Crimes", "Child Sexual Exploitation", "Unknown S-Type", "Suicide & Self-Harm"
     ]
+    create_repo("my-distilbert-toxic-classifier", private=True)
+    upload_folder(folder_path="my_distilbert_model", path_in_repo="", repo_id="shahdmo137/my-distilbert-toxic-classifier")
     tokenizer = AutoTokenizer.from_pretrained("my_distilbert_model")
     model = AutoModelForSequenceClassification.from_pretrained("my_distilbert_model", num_labels=len(class_labels))
     inputs = tokenizer(input_text, return_tensors="pt", truncation=True, padding=True)
