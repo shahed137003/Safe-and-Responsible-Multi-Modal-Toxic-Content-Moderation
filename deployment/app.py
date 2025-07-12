@@ -152,6 +152,7 @@ def Hard_Filter(input_text):
         return "UNSAFE"
     elif "SAFE" in response:
         return "SAFE"
+    
     else:
         return "UNKNOWN"
 
